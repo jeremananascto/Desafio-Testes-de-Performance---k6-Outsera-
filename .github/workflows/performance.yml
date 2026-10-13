@@ -1,0 +1,45 @@
+name: Performance - Teste de carga (k6)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'smoke (5 VUs/30s) ou full (500 VUs por 5 min)'
+        type: choice
+        options: [smoke, full]
+        default: smoke
+      base_url:
+        description: 'URL alvo (vazio = variável K6_BASE_URL ou JSONPlaceholder)'
+        type: string
+        required: false
+  schedule:
+    - cron: '0 6 * * 1' # carga completa semanal (segunda, 06:00 UTC)
+
+permissions:
+  contents: read
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PROFILE: ${{ github.event_name == 'schedule' && 'full' || github.event.inputs.profile || 'smoke' }}
+      BASE_URL: ${{ github.event.inputs.base_url || vars.K6_BASE_URL || 'https://jsonplaceholder.typicode.com' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/setup-k6-action@v1
+      - run: mkdir -p reports/load
+      - name: Executa k6 (${{ env.PROFILE }})
+        run: k6 run -e PROFILE=${{ env.PROFILE }} -e BASE_URL=${{ env.BASE_URL }} k6/load-test.js
+      - name: Resumo no Job Summary
+        if: always()
+        run: node scripts/summary.js >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: load-report
+          path: reports/load
+          retention-days: 30
