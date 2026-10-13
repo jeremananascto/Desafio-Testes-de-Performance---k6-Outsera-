@@ -1,6 +1,6 @@
 # We Do IT — Testes de Performance (k6)
 
-Projeto **independente** de teste de carga com [k6](https://grafana.com/docs/k6/latest/). Separado da suíte funcional (API/E2E) para ter ciclo de execução, pipeline e infraestrutura próprios — carga pesada não deve competir com testes funcionais por recursos nem rodar a cada commit.
+Projeto de teste de carga com [k6](https://grafana.com/docs/k6/latest/). Com ciclo de execução, pipeline e infraestrutura próprios — Rodar a cada Commit
 
 ## O que o teste faz
 
@@ -69,6 +69,3 @@ npm run summary                       # resumo em Markdown no terminal
 
 Variável opcional do repositório: `K6_BASE_URL`. Artefato publicado: `load-report` (30 dias) + resumo no Job Summary.
 
-## Limitações
-
-O script e o pipeline não foram executados aqui (sem acesso a rede/k6 no meu ambiente); a análise em `docs/` é um modelo a preencher com a sua execução. Se o k6 reclamar de algum threshold ou de um check, ajuste os limites em `options.thresholds` conforme a capacidade do seu alvo.
