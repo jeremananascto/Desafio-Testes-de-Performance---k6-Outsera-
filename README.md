@@ -1,4 +1,4 @@
-# We Do IT — Testes de Performance (k6)
+# — Testes de Performance (k6)
 
 Projeto de teste de carga com [k6](https://grafana.com/docs/k6/latest/). Com ciclo de execução, pipeline e infraestrutura próprios — Rodar a cada Commit
 
