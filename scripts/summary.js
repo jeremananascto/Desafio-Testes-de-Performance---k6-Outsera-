@@ -1,3 +1,5 @@
+// Resume reports/load/summary.json em Markdown (usado no Job Summary do GitHub Actions).
+// Uso: node scripts/summary.js [--strict]  (--strict sai com código 1 se algum threshold falhou)
 const fs = require('node:fs');
 
 const file = 'reports/load/summary.json';

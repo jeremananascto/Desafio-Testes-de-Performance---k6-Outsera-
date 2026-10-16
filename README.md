@@ -1,6 +1,6 @@
-# — Testes de Performance (k6)
+# We Do IT — Testes de Performance (k6)
 
-Projeto de teste de carga com [k6](https://grafana.com/docs/k6/latest/). Com ciclo de execução, pipeline e infraestrutura próprios — Rodar a cada Commit
+Projeto **independente** de teste de carga com [k6](https://grafana.com/docs/k6/latest/). Separado da suíte funcional (API/E2E) para ter ciclo de execução, pipeline e infraestrutura próprios — carga pesada não deve competir com testes funcionais por recursos nem rodar a cada commit.
 
 ## O que o teste faz
 
@@ -48,7 +48,7 @@ Não há `npm install`. Instale o k6: <https://grafana.com/docs/k6/latest/set-up
 mkdir -p reports/load                 # o k6 grava aqui
 
 npm run test:smoke                    # ou: k6 run -e PROFILE=smoke k6/load-test.js
-npm run test:load                     # ou: k6 run -e PROFILE=full  k6/load-test.js
+K6_BASE_URL=http://localhost:3000 npm run test:load  # full exige alvo explícito controlado
 
 # alvo diferente:
 k6 run -e PROFILE=full -e BASE_URL=http://localhost:3000 k6/load-test.js
@@ -58,14 +58,17 @@ npm run summary                       # resumo em Markdown no terminal
 
 **Relatórios gerados:** `reports/load/summary.html` (métricas e thresholds aprovados/reprovados), `reports/load/summary.json` (dados completos) e o resumo textual no terminal. Depois, preencha a análise em `docs/load-test-analysis.md`.
 
-> ⚠️ **Uso responsável:** o perfil `full` gera ~500 usuários simultâneos. Não o aponte para serviços de terceiros sem autorização. Para carga pesada, suba um mock próprio, por exemplo `docker run -p 3000:3000 -v ./db.json:/data/db.json clue/json-server` e use `BASE_URL=http://localhost:3000`.
+> ⚠️ **Proteção:** `full` exige `BASE_URL` explícita e bloqueia `jsonplaceholder.typicode.com`; não há fallback público. O agendamento semanal executa apenas `smoke`. Para executar carga completa, use um serviço de teste próprio ou outro ambiente autorizado e confirme que ele suporta os endpoints `/posts` e os comportamentos esperados pelo script.
 
 ## CI/CD
 
 `.github/workflows/performance.yml`:
 - push/PR → `smoke`;
-- agendado (segundas, 06:00 UTC) → `full`;
-- manual (*Run workflow*) → escolha o perfil e, se quiser, a URL alvo.
+- agendado (segundas, 06:00 UTC) → `smoke`;
+- manual (*Run workflow*) → escolha o perfil. Para `full`, informe uma URL controlada/autorizada; `jsonplaceholder.typicode.com` é bloqueado.
 
 Variável opcional do repositório: `K6_BASE_URL`. Artefato publicado: `load-report` (30 dias) + resumo no Job Summary.
 
+## Limitações
+
+O script e o pipeline não foram executados aqui (sem acesso a rede/k6 no meu ambiente); a análise em `docs/` é um modelo a preencher com a sua execução. Se o k6 reclamar de algum threshold ou de um check, ajuste os limites em `options.thresholds` conforme a capacidade do seu alvo.

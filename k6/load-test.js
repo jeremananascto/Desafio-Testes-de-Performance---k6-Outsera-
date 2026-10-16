@@ -1,10 +1,31 @@
+// Teste de carga k6.
+//   PROFILE=smoke  -> 5 VUs por 30s (sanidade, roda em todo commit)
+//   PROFILE=full   -> sobe até 500 VUs, MANTÉM 500 VUs por 5 minutos e desce (padrão do desafio)
+//
+// Uso seguro: k6 run -e PROFILE=full -e BASE_URL=http://localhost:3000 k6/load-test.js
+//
+// ATENÇÃO: não rode o perfil "full" contra APIs de terceiros sem autorização/uso responsável.
+// Para carga pesada, suba um mock próprio (ex.: json-server em Docker) e aponte BASE_URL para ele.
 import http from 'k6/http';
 import { check, group, sleep } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
 import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.1/index.js';
 
-const BASE_URL = __ENV.BASE_URL || 'https://jsonplaceholder.typicode.com';
 const PROFILE = __ENV.PROFILE || 'smoke';
+const PUBLIC_DEFAULT = 'https://jsonplaceholder.typicode.com';
+const BASE_URL = __ENV.BASE_URL || (PROFILE === 'smoke' ? PUBLIC_DEFAULT : '');
+
+if (PROFILE !== 'smoke' && PROFILE !== 'full') {
+  throw new Error(`PROFILE inválido: "${PROFILE}". Use "smoke" ou "full".`);
+}
+if (PROFILE === 'full') {
+  if (!BASE_URL) {
+    throw new Error('O perfil full exige BASE_URL explícita para um ambiente controlado/autorizado; nenhum destino público será usado como fallback.');
+  }
+  if (BASE_URL.toLowerCase().includes('jsonplaceholder.typicode.com')) {
+    throw new Error('Execução bloqueada: o perfil full não pode apontar para jsonplaceholder.typicode.com.');
+  }
+}
 
 const profiles = {
   smoke: {
@@ -16,9 +37,9 @@ const profiles = {
     executor: 'ramping-vus',
     startVUs: 0,
     stages: [
-      { duration: '1m', target: 500 }, 
-      { duration: '5m', target: 500 }, 
-      { duration: '30s', target: 0 }, 
+      { duration: '1m', target: 500 }, // rampa de subida
+      { duration: '5m', target: 500 }, // 500 usuários simultâneos por 5 minutos
+      { duration: '30s', target: 0 }, // rampa de descida
     ],
     gracefulRampDown: '30s',
   },
@@ -27,7 +48,7 @@ const profiles = {
 export const options = {
   scenarios: { api_load: profiles[PROFILE] },
   thresholds: {
-    http_req_failed: ['rate<0.01'], 
+    http_req_failed: ['rate<0.01'], // < 1% de erros inesperados
     http_req_duration: ['p(95)<800', 'p(99)<1500'],
     checks: ['rate>0.99'],
     'http_req_duration{endpoint:list_posts}': ['p(95)<900'],

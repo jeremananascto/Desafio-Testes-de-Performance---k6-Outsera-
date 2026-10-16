@@ -11,12 +11,13 @@ on:
         type: choice
         options: [smoke, full]
         default: smoke
+        required: true
       base_url:
-        description: 'URL alvo (vazio = variável K6_BASE_URL ou JSONPlaceholder)'
+        description: 'URL de ambiente controlado/autorizado (obrigatória para full)'
         type: string
         required: false
   schedule:
-    - cron: '0 6 * * 1' # carga completa semanal (segunda, 06:00 UTC)
+    - cron: '0 6 * * 1' # somente smoke semanal; full exige acionamento explícito
 
 permissions:
   contents: read
@@ -26,20 +27,45 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      PROFILE: ${{ github.event_name == 'schedule' && 'full' || github.event.inputs.profile || 'smoke' }}
-      BASE_URL: ${{ github.event.inputs.base_url || vars.K6_BASE_URL || 'https://jsonplaceholder.typicode.com' }}
+      PROFILE: ${{ github.event_name == 'schedule' && 'smoke' || github.event.inputs.profile || 'smoke' }}
+      BASE_URL: ${{ github.event.inputs.base_url || vars.K6_BASE_URL || '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: grafana/setup-k6-action@v1
-      - run: mkdir -p reports/load
+      - name: Validar destino do teste
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$PROFILE" == "full" ]]; then
+            if [[ -z "$BASE_URL" ]]; then
+              echo "::error::O perfil full exige base_url informado manualmente ou a variável K6_BASE_URL configurada para um ambiente controlado/autorizado."
+              exit 1
+            fi
+            normalized="$(printf '%s' "$BASE_URL" | tr '[:upper:]' '[:lower:]')"
+            if [[ "$normalized" == *"jsonplaceholder.typicode.com"* ]]; then
+              echo "::error::O perfil full está bloqueado para jsonplaceholder.typicode.com. Informe um ambiente próprio e autorizado."
+              exit 1
+            fi
+          elif [[ -z "$BASE_URL" ]]; then
+            echo "BASE_URL não definida; o perfil smoke usará o destino público padrão."
+          fi
+      - name: Preparar relatório
+        run: mkdir -p reports/load
       - name: Executa k6 (${{ env.PROFILE }})
-        run: k6 run -e PROFILE=${{ env.PROFILE }} -e BASE_URL=${{ env.BASE_URL }} k6/load-test.js
+        shell: bash
+        run: |
+          if [[ -n "$BASE_URL" ]]; then
+            k6 run -e PROFILE="$PROFILE" -e BASE_URL="$BASE_URL" --out json=reports/load/metrics.ndjson k6/load-test.js
+          else
+            k6 run -e PROFILE="$PROFILE" --out json=reports/load/metrics.ndjson k6/load-test.js
+          fi
       - name: Resumo no Job Summary
         if: always()
         run: node scripts/summary.js >> "$GITHUB_STEP_SUMMARY" || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: load-report
+          name: load-report-${{ github.run_id }}
           path: reports/load
+          if-no-files-found: warn
           retention-days: 30
