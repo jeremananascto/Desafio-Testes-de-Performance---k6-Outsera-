@@ -56,3 +56,22 @@ Próximas ações:
 4. Se houver necessidade de avaliar capacidade de produção, repetir o teste em ambiente representativo e autorizado.
 
 Os resultados não devem ser extrapolados para produção, pois o alvo foi uma API mock local.
+
+
+## Evidências adicionais: smoke test local
+
+Em 16/10/2026, foi executado um smoke test contra a API mock local (`http://127.0.0.1:3000`), com 5 usuários virtuais durante 30 segundos.
+
+| Métrica | Resultado |
+|---|---:|
+| Requisições HTTP | 316 |
+| Throughput médio | 9,77 req/s |
+| Falhas HTTP | 0% |
+| Latência p95 | 1,03 ms |
+| Latência p99 | 3,16 ms |
+| Checks aprovados | 632/632 (100%) |
+| VUs máximos | 5 |
+
+O arquivo `reports/load/metrics.ndjson` contém as métricas detalhadas dessa execução. Os resumos da carga completa foram preservados em `reports/archive/full-500vus-20261016/`.
+
+Os resultados do smoke test e da carga completa devem ser analisados separadamente, pois representam perfis e execuções diferentes.
