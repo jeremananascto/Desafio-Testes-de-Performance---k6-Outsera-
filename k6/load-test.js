@@ -1,11 +1,3 @@
-// Teste de carga k6.
-//   PROFILE=smoke  -> 5 VUs por 30s (sanidade, roda em todo commit)
-//   PROFILE=full   -> sobe até 500 VUs, MANTÉM 500 VUs por 5 minutos e desce (padrão do desafio)
-//
-// Uso seguro: k6 run -e PROFILE=full -e BASE_URL=http://localhost:3000 k6/load-test.js
-//
-// ATENÇÃO: não rode o perfil "full" contra APIs de terceiros sem autorização/uso responsável.
-// Para carga pesada, suba um mock próprio (ex.: json-server em Docker) e aponte BASE_URL para ele.
 import http from 'k6/http';
 import { check, group, sleep } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
