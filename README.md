@@ -56,7 +56,14 @@ k6 run -e PROFILE=full -e BASE_URL=http://localhost:3000 k6/load-test.js
 npm run summary                       # resumo em Markdown no terminal
 ```
 
-**Relatórios gerados:** `reports/load/summary.html` (métricas e thresholds aprovados/reprovados), `reports/load/summary.json` (dados completos) e o resumo textual no terminal. Depois, preencha a análise em `docs/load-test-analysis.md`.
+**Relatórios gerados:**
+
+- `reports/load/summary.html` — relatório visual da execução mais recente.
+- `reports/load/summary.json` — métricas agregadas e resultados dos thresholds da execução mais recente.
+- `reports/load/metrics.ndjson` — métricas detalhadas da execução que gerou esse arquivo.
+- `reports/archive/full-500vus-20261016/summary.html` e `summary.json` — relatórios arquivados de uma execução com 5 VUs; não comprovam a carga completa de 500 VUs.
+
+Os arquivos em `reports/load/` podem ser sobrescritos por novas execuções. Consulte também o perfil, o alvo e a data registrados no relatório antes de comparar resultados. As evidências do smoke test na API pública e da carga completa no mock local representam cenários diferentes e não devem ser comparadas como se fossem a mesma execução.
 
 > ⚠️ **Proteção:** `full` exige `BASE_URL` explícita e bloqueia `jsonplaceholder.typicode.com`; não há fallback público. O agendamento semanal executa apenas `smoke`. Para executar carga completa, use um serviço de teste próprio ou outro ambiente autorizado e confirme que ele suporta os endpoints `/posts` e os comportamentos esperados pelo script.
 

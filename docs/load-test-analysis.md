@@ -57,7 +57,6 @@ Próximas ações:
 
 Os resultados não devem ser extrapolados para produção, pois o alvo foi uma API mock local.
 
-
 ## Evidências adicionais: smoke test local
 
 Em 16/10/2026, foi executado um smoke test contra a API mock local (`http://127.0.0.1:3000`), com 5 usuários virtuais durante 30 segundos.
@@ -72,6 +71,6 @@ Em 16/10/2026, foi executado um smoke test contra a API mock local (`http://127.
 | Checks aprovados | 632/632 (100%) |
 | VUs máximos | 5 |
 
-O arquivo `reports/load/metrics.ndjson` contém as métricas detalhadas dessa execução. Os resumos da carga completa foram preservados em `reports/archive/full-500vus-20261016/`.
+Os resultados históricos da carga completa estão documentados separadamente. Os arquivos atualmente presentes em `reports/archive/full-500vus-20261016/` registram uma execução com apenas 5 VUs e não comprovam a execução de 500 VUs.
 
 Os resultados do smoke test e da carga completa devem ser analisados separadamente, pois representam perfis e execuções diferentes.
