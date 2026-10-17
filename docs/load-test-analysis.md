@@ -1,48 +1,58 @@
 # Análise do teste de carga
 
-> Preencher somente após executar o perfil `full` contra um ambiente controlado e autorizado. Não registrar valores estimados como resultados medidos. Anexar/guardar `summary.html`, `summary.json` e `metrics.ndjson` da mesma execução.
+## 1. Configuração
 
-## Configuração da execução
 | Item | Valor |
 |---|---|
-| Data / responsável | PREENCHER |
-| Alvo (`BASE_URL`) | PREENCHER (ambiente controlado/autorizado) |
-| Perfil | full — rampa 1 min → 500 VUs por 5 min → descida 30 s |
-| Versão/commit | PREENCHER |
-| Ambiente do gerador de carga | PREENCHER (runner/máquina, CPU, RAM e rede) |
-| Evidências | `reports/load/summary.html`, `summary.json`, `metrics.ndjson` |
+| Data | 16/10/2026 |
+| Alvo | `http://127.0.0.1:3000` |
+| Ambiente | API mock Node.js local |
+| Perfil | Full — até 500 VUs |
+| Duração da carga | Aproximadamente 6 min 30 s |
+| Gerador | k6 executado localmente no Windows |
+| Evidências | `reports/load/summary.html` e `reports/load/summary.json` |
+| Métricas temporais | `metrics.ndjson` não disponível nesta execução |
 
-## Resultados medidos
-| Métrica | Valor medido | Threshold | Status |
+## 2. Resultados medidos
+
+| Métrica | Resultado | Limite | Status |
 |---|---:|---:|---|
-| Requisições totais | PREENCHER | — | PREENCHER |
-| Throughput (`http_reqs`/s) | PREENCHER req/s | — | PREENCHER |
-| Taxa de falhas (`http_req_failed`) | PREENCHER % | < 1% | PREENCHER |
-| Latência p95 (`http_req_duration`) | PREENCHER ms | < 800 ms | PREENCHER |
-| Latência p99 | PREENCHER ms | < 1500 ms | PREENCHER |
-| Checks aprovados | PREENCHER % | > 99% | PREENCHER |
-| Erros de negócio (`business_errors`) | PREENCHER % | < 1% | PREENCHER |
-| p95 por endpoint (list / get / create) | PREENCHER ms | 900 / 700 / 900 ms | PREENCHER |
-| VUs máximos efetivamente atingidos | PREENCHER | 500 | PREENCHER |
-| Iterações descartadas (`dropped_iterations`) | PREENCHER | 0 desejável | PREENCHER |
+| Requisições HTTP | 345.768 | — | Informativo |
+| Throughput médio | 881,40 req/s | — | Informativo |
+| Falhas HTTP | 0% | < 1% | Passou |
+| Latência p95 | 0,603 ms | < 800 ms | Passou |
+| Latência p99 | 1,071 ms | < 1.500 ms | Passou |
+| Checks | 100% (691.536/691.536) | > 99% | Passou |
+| Erros de negócio | 0% | < 1% | Passou |
+| p95 — listar posts | 0,594 ms | < 900 ms | Passou |
+| p95 — consultar post | 0,636 ms | < 700 ms | Passou |
+| p95 — criar post | 0,637 ms | < 900 ms | Passou |
+| Pico de VUs | 500 | 500 | Passou |
+| Iterações descartadas | Não confirmado | 0 desejável | Pendente |
 
-## Comportamento durante a rampa
-Use `metrics.ndjson` e o resumo para descrever a tendência em intervalos de tempo:
-- **0–1 min (rampa de subida):** registrar a evolução de latência, throughput e erros; indicar quando o p95 ultrapassou algum limite.
-- **1–6 min (platô de 500 VUs):** dizer se latência/throughput estabilizaram, continuaram piorando ou se houve erros/timeouts.
-- **6–6,5 min (rampa de descida):** verificar se a latência e a taxa de erros recuperaram após reduzir a carga.
-- Registrar se o gerador de carga ficou saturado. Sem métricas de CPU/RAM do runner, não concluir que o gerador estava saudável apenas com base nas métricas HTTP.
+## 3. Análise
 
-## Potenciais gargalos identificados
-1. PREENCHER com evidência observada (métrica, endpoint e intervalo).
-2. PREENCHER com evidência observada (métrica, endpoint e intervalo).
+O teste atingiu 500 usuários virtuais e concluiu 86.442 iterações. Foram realizadas 345.768 requisições HTTP, sem falhas HTTP, e todos os checks passaram.
 
-## Conclusão e recomendações
-PREENCHER: informar se os thresholds passaram, qual foi a carga efetivamente sustentada, limitações do teste e próximos passos. Não atribuir gargalos a CPU, banco ou rede sem evidência que sustente a hipótese.
+Não foi possível analisar a evolução das métricas por intervalo porque o arquivo `metrics.ndjson` não estava disponível para essa execução.
 
-## Interpretação de referência
-- Latência crescendo junto com os VUs pode indicar saturação progressiva (CPU, pool de conexões, banco ou dependências).
-- Latência estável com erros 429/5xx pode indicar rate limiting ou limite de capacidade.
-- p99 muito acima do p95 sugere cauda longa, que pode estar associada a filas, pausas de GC, locks ou cold starts.
-- `http_req_waiting` alto em relação a `http_req_connecting`/`tls_handshaking` pode apontar para tempo de processamento no servidor, mas requer confirmação no ambiente.
-- `dropped_iterations` ou saturação de CPU do gerador pode invalidar a leitura da capacidade do alvo; repetir com mais recursos ou execução distribuída.
+O teste foi executado contra uma API mock na própria máquina. Portanto, os resultados validam o cenário local e não comprovam a capacidade de uma aplicação em produção.
+
+## 4. Gargalos e limitações
+
+Não foi identificado um gargalo específico com base nos dados agregados disponíveis.
+
+Não há dados suficientes para concluir se o computador gerador de carga atingiu limites de CPU, memória ou rede.
+
+## 5. Conclusão e próximos passos
+
+Os thresholds configurados para falhas HTTP, latência, checks e erros de negócio passaram no ambiente local.
+
+Próximas ações:
+
+1. Gerar `metrics.ndjson` em uma nova execução controlada.
+2. Verificar iterações descartadas e analisar a evolução temporal das métricas.
+3. Registrar CPU e memória do gerador durante a execução.
+4. Se houver necessidade de avaliar capacidade de produção, repetir o teste em ambiente representativo e autorizado.
+
+Os resultados não devem ser extrapolados para produção, pois o alvo foi uma API mock local.
